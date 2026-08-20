@@ -1,4 +1,3 @@
-import 'package:cross_file/cross_file.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
@@ -73,14 +72,14 @@ class _BackupScreenState extends State<BackupScreen> {
     if (password == null) return;
     await _run(() async {
       final xfile = await BackupService.instance.exportEncryptedBackup(password: password);
-      await Share.shareXFiles([xfile], text: 'kanri 暗号化バックアップ');
+      await SharePlus.instance.share(ShareParams(files: [xfile], text: 'kanri 暗号化バックアップ'));
     });
   }
 
   Future<void> _importBackup() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.any, withData: true);
-    if (result == null || result.files.single.bytes == null) return;
-    final bytes = result.files.single.bytes!;
+    final result = await FilePicker.pickFiles(type: FileType.any);
+    if (result.isEmpty) return;
+    final bytes = await result.first.readAsBytes();
     final password = await _askPassword(title: 'バックアップのパスワードを入力');
     if (password == null) return;
 
@@ -126,7 +125,7 @@ class _BackupScreenState extends State<BackupScreen> {
   Future<void> _exportCsv(Future<XFile> Function() exporter) async {
     await _run(() async {
       final xfile = await exporter();
-      await Share.shareXFiles([xfile]);
+      await SharePlus.instance.share(ShareParams(files: [xfile]));
     });
   }
 

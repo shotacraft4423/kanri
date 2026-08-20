@@ -10,7 +10,9 @@ class SecureStorageService {
   SecureStorageService._();
   static final SecureStorageService instance = SecureStorageService._();
 
-  static const _androidOptions = AndroidOptions(encryptedSharedPreferences: true);
+  // flutter_secure_storage 10+ はAndroidで常にEncryptedSharedPreferencesを使うため
+  // 明示的なオプション指定は不要になった。
+  static const _androidOptions = AndroidOptions();
   static const _iosOptions = IOSOptions(
     accessibility: KeychainAccessibility.first_unlock_this_device,
   );
