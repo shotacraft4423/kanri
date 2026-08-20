@@ -42,11 +42,12 @@ dependencies:
   # 追跡番号タップで配送会社サイトを開く（オンライン時のみ使用する任意機能）
   url_launcher: ^6.3.0
 
-  # アプリ切替時のスクリーンショット/画面録画対策 (Androidは自前MethodChannelでも可)
-  screen_protector: ^1.4.2
+  # Web版（動作確認用ビルド）でのローカルDB (sqlite3 wasm + IndexedDB)
   sqflite_common_ffi_web: ^1.1.2
-  cross_file: ^0.3.5+4
   sqflite_common: ^2.5.11
+
+  # バックアップ/CSVエクスポートをdart:ioなしでプラットフォーム横断的に扱うため
+  cross_file: ^0.3.5+4
 
 dev_dependencies:
   flutter_test:

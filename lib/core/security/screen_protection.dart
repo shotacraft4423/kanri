@@ -1,33 +1,23 @@
-import 'package:flutter/foundation.dart';
-import 'package:screen_protector/screen_protector.dart';
-
 /// アプリ切替画面(タスクスイッチャー)のサムネイルやスクリーンショットへの
-/// 機密情報露出を軽減する。iOSはOS仕様上スクリーンショット自体は禁止できないため、
-/// 「バックグラウンド遷移時にプライバシースクリーンを重ねる」対応に留まる（docs/DESIGN.md参照）。
+/// 機密情報露出を軽減する処理は、プラットフォームのネイティブコード側で
+/// 常時有効な形で実装している（Dart側での実行時トグルは不要）。
+///
+/// - Android: android/app/src/main/kotlin/.../MainActivity.kt の onCreate で
+///   FLAG_SECURE を設定し、スクリーンショット・画面録画・タスクスイッチャーの
+///   サムネイル表示をOS側で完全にブロックする。
+/// - iOS: ios/Runner/AppDelegate.swift でバックグラウンド遷移時に
+///   プライバシースクリーン（ぼかしオーバーレイ）を重ねる。
+///   iOSはOS仕様上スクリーンショット自体は禁止できないため、
+///   タスクスイッチャーでの一瞬の見え方を軽減する対応に留まる（docs/DESIGN.md参照）。
+///
+/// 以前はサードパーティの `screen_protector` パッケージを使っていたが、
+/// 現行のAndroid Gradle Plugin/Kotlinツールチェーンと非互換でビルドが
+/// 失敗するようになったため、ネイティブコードへの直接実装に切り替えた。
 class ScreenProtectionService {
   ScreenProtectionService._();
   static final ScreenProtectionService instance = ScreenProtectionService._();
 
-  bool _enabled = false;
-
   Future<void> enable() async {
-    if (_enabled) return;
-    // Web版（動作確認用ビルド）はブラウザの仕様上、アプリ切替画面保護に相当する機能がないため何もしない。
-    if (kIsWeb) return;
-    try {
-      await ScreenProtector.preventScreenshotOn();
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        await ScreenProtector.protectDataLeakageWithBlur();
-      }
-      _enabled = true;
-    } catch (_) {
-      // 一部端末/OSバージョンで非対応の場合は無視し、アプリロックによる保護を主とする。
-    }
-  }
-
-  Future<void> disableScreenshotBlockOnly() async {
-    try {
-      await ScreenProtector.preventScreenshotOff();
-    } catch (_) {}
+    // ネイティブ側で常時有効なため、Dart側では何もしない。
   }
 }
