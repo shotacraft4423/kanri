@@ -1,4 +1,4 @@
-name: Build web preview & Android APK
+name: Build web preview, Android APK & iOS verify
 
 on:
   push:
@@ -49,4 +49,24 @@ jobs:
         with:
           name: kanri-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 30
+
+  build-ios-verify:
+    # 署名なしのコンパイル確認のみ。App Store IDやApple Developer Programが無いと
+    # 実機にインストールできるIPAは作れないため、ここではビルドが通ることの確認に留める。
+    # 実機で使うには、Xcodeが動くMacで `flutter build ipa` を実行し、
+    # 無料のApple ID(パーソナルチーム、7日で失効)または有料のDeveloper Program
+    # (TestFlight配布、期限なし)で署名する必要がある。
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kanri-ios-unsigned-app
+          path: build/ios/iphoneos/Runner.app
           retention-days: 30

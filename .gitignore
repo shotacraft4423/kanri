@@ -8,17 +8,21 @@ build/
 pubspec.lock
 *.iml
 .idea/
-ios/
 macos/
 linux/
 windows/
 *.g.dart
 
-# android/ と web/ はビルド設定・セキュリティ設定を含むためコミット対象とする
+# android/, ios/, web/ はビルド設定・セキュリティ設定を含むためコミット対象とする
 android/.gradle/
 android/app/build/
 android/build/
 android/local.properties
 android/**/*.iml
+ios/Flutter/Flutter.podspec
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/Generated.xcconfig
 *.freezed.dart
 .DS_Store
