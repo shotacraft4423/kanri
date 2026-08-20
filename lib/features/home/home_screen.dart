@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/util/formatters.dart';
@@ -89,6 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                if (kIsWeb) const _WebDemoNotice(),
+                if (kIsWeb) const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(child: _StatCard(label: '本日の売上', value: Formatters.yen(s.todaySalesTotal))),
@@ -160,6 +163,35 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _WebDemoNotice extends StatelessWidget {
+  const _WebDemoNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.amber.withOpacity(0.15),
+      child: const Padding(
+        padding: EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.info_outline, color: Colors.amber),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'これは動作確認用のWeb版です。データはこの端末のブラウザ内にのみ保存され、'
+                'DB暗号化や生体認証などのセキュリティ機能は動作しません（PINロックのみ利用可）。'
+                '実際の顧客情報の登録は避けてください。',
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
+          ],
         ),
       ),
     );

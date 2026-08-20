@@ -157,7 +157,8 @@ class _SaleNewScreenState extends State<SaleNewScreen> {
 
   Widget _buildLineCard(int idx) {
     final line = _lines[idx];
-    final available = line.product != null ? (_inventory[line.product!.id]?.availableQuantity ?? 0) : 0;
+    final double available =
+        line.product != null ? (_inventory[line.product!.id]?.availableQuantity ?? 0) : 0;
     final overSelling = line.product != null && line.quantity > available;
 
     return Card(

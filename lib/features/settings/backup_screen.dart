@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:cross_file/cross_file.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
@@ -73,20 +72,20 @@ class _BackupScreenState extends State<BackupScreen> {
     final password = await _askPassword(title: 'バックアップの暗号化パスワードを設定（8文字以上）', confirm: true);
     if (password == null) return;
     await _run(() async {
-      final file = await BackupService.instance.exportEncryptedBackup(password: password);
-      await Share.shareXFiles([XFile(file.path)], text: 'kanri 暗号化バックアップ');
+      final xfile = await BackupService.instance.exportEncryptedBackup(password: password);
+      await Share.shareXFiles([xfile], text: 'kanri 暗号化バックアップ');
     });
   }
 
   Future<void> _importBackup() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.any);
-    if (result == null || result.files.single.path == null) return;
-    final file = File(result.files.single.path!);
+    final result = await FilePicker.platform.pickFiles(type: FileType.any, withData: true);
+    if (result == null || result.files.single.bytes == null) return;
+    final bytes = result.files.single.bytes!;
     final password = await _askPassword(title: 'バックアップのパスワードを入力');
     if (password == null) return;
 
     await _run(() async {
-      final envelope = await BackupService.instance.decryptBackupFile(file: file, password: password);
+      final envelope = await BackupService.instance.decryptBackupData(bytes: bytes, password: password);
       final data = (envelope['data'] as Map).cast<String, dynamic>();
       final preview = await ImportService.instance.preview(data);
       if (!mounted) return;
@@ -124,10 +123,10 @@ class _BackupScreenState extends State<BackupScreen> {
     });
   }
 
-  Future<void> _exportCsv(Future<File> Function() exporter) async {
+  Future<void> _exportCsv(Future<XFile> Function() exporter) async {
     await _run(() async {
-      final file = await exporter();
-      await Share.shareXFiles([XFile(file.path)]);
+      final xfile = await exporter();
+      await Share.shareXFiles([xfile]);
     });
   }
 

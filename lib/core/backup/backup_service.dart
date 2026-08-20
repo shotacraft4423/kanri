@@ -1,7 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
+import 'package:cross_file/cross_file.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 
 import '../db/app_database.dart';
@@ -11,6 +10,8 @@ import 'crypto_util.dart';
 /// 端末を移行できる完全バックアップの出力・復号。
 /// 顧客情報を含む全データをユーザー指定パスワードでAES-256-GCM暗号化した
 /// 単一ファイル(.kanribackup)として書き出す。パスワードはアプリ内のどこにも保存されない。
+///
+/// dart:io を使わずメモリ上で暗号化し、XFileとして返す（Web版含む全プラットフォーム共通）。
 class BackupService {
   BackupService._();
   static final BackupService instance = BackupService._();
@@ -26,8 +27,8 @@ class BackupService {
     return data;
   }
 
-  /// 暗号化フルバックアップファイルを作成し、保存先パスを返す。
-  Future<File> exportEncryptedBackup({required String password}) async {
+  /// 暗号化フルバックアップファイル(XFile)を作成する。
+  Future<XFile> exportEncryptedBackup({required String password}) async {
     final data = await _collectAllData();
     final envelope = {
       'appName': 'kanri',
@@ -38,23 +39,15 @@ class BackupService {
     final plainJson = jsonEncode(envelope);
     final encrypted = await CryptoUtil.encryptToPortableString(plainJson, password);
 
-    final dir = await getApplicationDocumentsDirectory();
-    final backupDir = Directory('${dir.path}/backups');
-    if (!await backupDir.exists()) {
-      await backupDir.create(recursive: true);
-    }
-    final fileName =
-        'kanri_backup_${DateTime.now().millisecondsSinceEpoch}.kanribackup';
-    final file = File('${backupDir.path}/$fileName');
-    await file.writeAsString(encrypted);
-    return file;
+    final fileName = 'kanri_backup_${DateTime.now().millisecondsSinceEpoch}.kanribackup';
+    return XFile.fromData(utf8.encode(encrypted), name: fileName, mimeType: 'application/json');
   }
 
-  Future<Map<String, dynamic>> decryptBackupFile({
-    required File file,
+  Future<Map<String, dynamic>> decryptBackupData({
+    required List<int> bytes,
     required String password,
   }) async {
-    final content = await file.readAsString();
+    final content = utf8.decode(bytes);
     final decrypted = await CryptoUtil.decryptFromPortableString(content, password);
     final envelope = jsonDecode(decrypted) as Map<String, dynamic>;
     return envelope;

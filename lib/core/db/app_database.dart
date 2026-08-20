@@ -1,17 +1,19 @@
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 
 import '../security/secure_storage_service.dart';
+import 'platform/db_opener.dart';
 
-/// SQLCipherで全面暗号化されたローカルDBへの唯一の接続窓口。
+/// モバイル(Android/iOS)ではSQLCipherで全面暗号化されたローカルDBへの唯一の接続窓口。
 /// 暗号化パスフレーズはOSセキュアストレージにのみ存在し、DBファイル本体はどのアプリ内コードにも
 /// 平文で書き出さない。
+/// Web版（動作確認用ビルド）ではブラウザ内(IndexedDB)に保存し、暗号化は行わない
+/// （isDatabaseEncryptionSupportedがfalseになる。docs/DESIGN.mdの制約事項を参照）。
 class AppDatabase {
   AppDatabase._();
   static final AppDatabase instance = AppDatabase._();
 
   static const int schemaVersion = 1;
+  static const String _fileName = 'kanri_secure.db';
 
   Database? _db;
 
@@ -21,18 +23,16 @@ class AppDatabase {
   }
 
   Future<Database> _open() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final dbPath = p.join(dir.path, 'kanri_secure.db');
-    final passphrase = await SecureStorageService.instance.getOrCreateDbPassphrase();
+    final dbPath = await resolveAppDatabasePath(_fileName);
+    final passphrase = isDatabaseEncryptionSupported
+        ? await SecureStorageService.instance.getOrCreateDbPassphrase()
+        : null;
 
-    return openDatabase(
-      dbPath,
+    return openAppDatabase(
+      path: dbPath,
       password: passphrase,
       version: schemaVersion,
-      onConfigure: (db) async {
-        await db.execute('PRAGMA foreign_keys = ON');
-      },
-      onCreate: (db, version) async {
+      onCreate: (db) async {
         await _createSchema(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
@@ -238,10 +238,9 @@ class AppDatabase {
 
   /// アプリデータ完全初期化（設定画面の専用確認フローからのみ呼び出すこと）。
   Future<void> deleteDatabaseFile() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final dbPath = p.join(dir.path, 'kanri_secure.db');
+    final dbPath = await resolveAppDatabasePath(_fileName);
     await _db?.close();
     _db = null;
-    await deleteDatabase(dbPath);
+    await deleteAppDatabase(dbPath);
   }
 }

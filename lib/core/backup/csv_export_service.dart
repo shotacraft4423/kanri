@@ -1,27 +1,28 @@
-import 'dart:io';
+import 'dart:convert';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:csv/csv.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../db/app_database.dart';
 
 /// 汎用CSV出力。既定では顧客の氏名・住所・電話番号列を含めない
 /// （含める場合は includeCustomerPii=true を明示的に指定し、呼び出し側UIで確認ダイアログを出す）。
+///
+/// dart:io を使わずメモリ上でCSVを組み立て、XFileとして返す。
+/// これによりAndroid/iOS/Webのいずれでも同じコードで動作し、
+/// 実際のファイル保存・共有はshare_plus側のプラットフォーム実装に委ねる。
 class CsvExportService {
   CsvExportService._();
   static final CsvExportService instance = CsvExportService._();
 
-  Future<File> _writeCsv(String name, List<List<Object?>> rows) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final exportDir = Directory('${dir.path}/exports');
-    if (!await exportDir.exists()) await exportDir.create(recursive: true);
-    final file = File('${exportDir.path}/${name}_${DateTime.now().millisecondsSinceEpoch}.csv');
+  XFile _buildCsvFile(String name, List<List<Object?>> rows) {
     final csv = const ListToCsvConverter().convert(rows);
-    await file.writeAsString(csv);
-    return file;
+    final bytes = utf8.encode('﻿$csv'); // Excel文字化け対策でBOM付与
+    final fileName = '${name}_${DateTime.now().millisecondsSinceEpoch}.csv';
+    return XFile.fromData(bytes, name: fileName, mimeType: 'text/csv');
   }
 
-  Future<File> exportProducts() async {
+  Future<XFile> exportProducts() async {
     final db = await AppDatabase.instance.database;
     final rows = await db.query('products', orderBy: 'name ASC');
     final data = [
@@ -39,10 +40,10 @@ class CsvExportService {
             r['low_stock_threshold'],
           ]),
     ];
-    return _writeCsv('products', data);
+    return _buildCsvFile('products', data);
   }
 
-  Future<File> exportPurchases() async {
+  Future<XFile> exportPurchases() async {
     final db = await AppDatabase.instance.database;
     final rows = await db.rawQuery('''
       SELECT pu.id, pu.purchase_date, pu.status, pu.tracking_number, pu.arrival_date,
@@ -71,11 +72,11 @@ class CsvExportService {
             r['received_quantity'],
           ]),
     ];
-    return _writeCsv('purchases', data);
+    return _buildCsvFile('purchases', data);
   }
 
   /// 販売履歴CSV。既定では顧客氏名の代わりに顧客IDのみを出力し、個人情報漏洩を避ける。
-  Future<File> exportSales({bool includeCustomerName = false}) async {
+  Future<XFile> exportSales({bool includeCustomerName = false}) async {
     final db = await AppDatabase.instance.database;
     final rows = await db.rawQuery('''
       SELECT o.id, o.order_number, o.order_date, o.customer_id, c.name as customer_name,
@@ -111,10 +112,10 @@ class CsvExportService {
             r['profit'],
           ]),
     ];
-    return _writeCsv('sales', data);
+    return _buildCsvFile('sales', data);
   }
 
-  Future<File> exportInventory() async {
+  Future<XFile> exportInventory() async {
     final db = await AppDatabase.instance.database;
     final rows = await db.rawQuery('''
       SELECT p.id, p.name, inv.quantity, inv.reserved_quantity, p.low_stock_threshold
@@ -132,10 +133,10 @@ class CsvExportService {
             r['low_stock_threshold'],
           ]),
     ];
-    return _writeCsv('inventory', data);
+    return _buildCsvFile('inventory', data);
   }
 
-  Future<File> exportShipments() async {
+  Future<XFile> exportShipments() async {
     final db = await AppDatabase.instance.database;
     final rows = await db.rawQuery('''
       SELECT o.order_number, o.order_date, s.status, s.carrier, s.tracking_number,
@@ -156,6 +157,6 @@ class CsvExportService {
             r['arrived_at'],
           ]),
     ];
-    return _writeCsv('shipments', data);
+    return _buildCsvFile('shipments', data);
   }
 }

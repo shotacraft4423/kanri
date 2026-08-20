@@ -8,12 +8,17 @@ build/
 pubspec.lock
 *.iml
 .idea/
-android/
 ios/
 macos/
 linux/
 windows/
-web/
 *.g.dart
+
+# android/ と web/ はビルド設定・セキュリティ設定を含むためコミット対象とする
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/**/*.iml
 *.freezed.dart
 .DS_Store

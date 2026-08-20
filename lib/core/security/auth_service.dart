@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
 
 import 'pin_hasher.dart';
@@ -20,6 +21,9 @@ class AuthService {
   static const Duration _lockoutDuration = Duration(minutes: 5);
 
   Future<bool> isBiometricAvailable() async {
+    // Web版（動作確認用ビルド）は生体認証プラットフォーム実装が無いため、
+    // 常にPINでのロック解除にフォールバックする。
+    if (kIsWeb) return false;
     try {
       final supported = await _localAuth.isDeviceSupported();
       final canCheck = await _localAuth.canCheckBiometrics;

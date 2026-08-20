@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../models/app_settings.dart';
 import '../../repositories/settings_repository.dart';
 import 'auth_service.dart';
 import 'screen_protection.dart';

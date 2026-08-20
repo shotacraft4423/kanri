@@ -12,6 +12,8 @@ class ScreenProtectionService {
 
   Future<void> enable() async {
     if (_enabled) return;
+    // Web版（動作確認用ビルド）はブラウザの仕様上、アプリ切替画面保護に相当する機能がないため何もしない。
+    if (kIsWeb) return;
     try {
       await ScreenProtector.preventScreenshotOn();
       if (defaultTargetPlatform == TargetPlatform.iOS) {

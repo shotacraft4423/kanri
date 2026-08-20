@@ -37,13 +37,16 @@ dependencies:
 
   # ファイル保存・共有・選択（エクスポート/インポート）
   file_picker: ^8.0.6
-  share_plus: ^9.0.0
+  share_plus: ^10.0.0
 
   # 追跡番号タップで配送会社サイトを開く（オンライン時のみ使用する任意機能）
   url_launcher: ^6.3.0
 
   # アプリ切替時のスクリーンショット/画面録画対策 (Androidは自前MethodChannelでも可)
   screen_protector: ^1.4.2
+  sqflite_common_ffi_web: ^1.1.2
+  cross_file: ^0.3.5+4
+  sqflite_common: ^2.5.11
 
 dev_dependencies:
   flutter_test:
