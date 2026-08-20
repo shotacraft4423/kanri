@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.kanri.kanri"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_secure_storage 11+ が要求するAPIレベルに合わせてFlutterの既定値を上書きする
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
